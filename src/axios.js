@@ -1,6 +1,5 @@
 import axios from 'axios';
-import router from '@/router';
-
+import router from './router';
 // Mengambil URL root backend dari environment variable (.env / .env.production)
 const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
 

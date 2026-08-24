@@ -1,7 +1,8 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import api from '@/axios'
+import axios from 'axios' // 1. IMPORT AXIOS MURNI KHUSUS UNTUK CSRF
+import api from '@/axios' // 2. IMPORT CUSTOM AXIOS UNTUK REGISTER
 
 const router = useRouter()
 const name = ref('')
@@ -22,10 +23,15 @@ const handleRegister = async () => {
   isLoading.value = true
 
   try {
-    // 1. Ambil CSRF cookie dari root backend Laravel terlebih dahulu
-    await api.get('/sanctum/csrf-cookie')
+    const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'
 
-    // 2. Request register ke backend (session login otomatis tercipta jika backend mengaturnya)
+    // 1. Ambil CSRF cookie pakai AXIOS MURNI ke root URL
+    await axios.get(`${backendUrl}/sanctum/csrf-cookie`, {
+        withCredentials: true
+    })
+
+    // 2. Request register pakai CUSTOM AXIOS (api)
+    // Ini otomatis akan menembak ke baseURL + /register
     await api.post('/register', {
       name: name.value,
       phone: phone.value,
@@ -34,8 +40,11 @@ const handleRegister = async () => {
       password_confirmation: passwordConfirmation.value
     })
 
-    // 3. Karena murni pakai cookie, tidak perlu localStorage. 
-    // Langsung arahkan ke halaman katalog/dashboard.
+    // 3. Simpan state agar router tidak melempar balik ke /login
+    // (Penting: Tambahkan ini agar interceptor tahu user sudah login)
+    localStorage.setItem('isLoggedIn', 'true')
+
+    // 4. Langsung arahkan ke halaman katalog/dashboard
     router.push({ name: 'catalog' })
 
   } catch (err) {
