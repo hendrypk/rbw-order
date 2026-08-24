@@ -226,7 +226,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-    <div class="w-full max-w-md mx-auto bg-gray-50 dark:bg-gray-950 h-dvh flex flex-col relative overflow-hidden transition-colors duration-300">
+    <div class="w-full bg-gray-50 dark:bg-gray-950 h-dvh flex flex-col relative overflow-hidden transition-colors duration-300">
         
         <!-- HEADER STICKY -->
         <header class="sticky top-0 bg-white/80 dark:bg-gray-900/85 backdrop-blur-md z-40 border-b border-gray-100 dark:border-gray-800 transition-all shrink-0">
