@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios' 
 import api from '@/axios' 
+import ThemeToggle from '@/components/ThemeToggle.vue'
 
 const router = useRouter()
 const name = ref('')
@@ -62,48 +63,53 @@ const handleRegister = async () => {
 </script>
 
 <template>
-  <div class="flex flex-col justify-center px-6 py-8 h-dvh w-screen bg-white max-w-md mx-auto overflow-y-auto">
+  <div class="flex flex-col justify-center px-6 py-8 h-dvh w-screen bg-white dark:bg-gray-950 max-w-md mx-auto overflow-y-auto transition-colors duration-300 relative">
+    
+    <div class="absolute top-6 right-6">
+      <ThemeToggle />
+    </div>
+
     <div class="sm:mx-auto sm:w-full sm:max-w-sm mb-4">
-      <h2 class="text-center text-2xl font-bold tracking-tight text-gray-900">Buat Akun Baru</h2>
-      <p class="text-center text-sm text-gray-600 mt-1">Nikmati kemudahan pesan Roti Bakar Wisuda</p>
+      <h2 class="text-center text-2xl font-bold tracking-tight text-gray-900 dark:text-white">Buat Akun Baru</h2>
+      <p class="text-center text-sm text-gray-600 dark:text-gray-400 mt-1">Nikmati kemudahan pesan Roti Bakar Wisuda</p>
     </div>
 
     <div class="sm:mx-auto sm:w-full sm:max-w-sm">
-      <div v-if="errorMessage" class="mb-3 p-3 bg-red-50 border border-red-200 text-red-600 text-xs rounded-xl text-center">
+      <div v-if="errorMessage" class="mb-3 p-3 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 text-red-600 dark:text-red-400 text-xs rounded-xl text-center">
         {{ errorMessage }}
       </div>
 
       <form @submit.prevent="handleRegister" class="space-y-3">
         <div>
-          <label class="block text-[11px] font-semibold text-gray-700 uppercase tracking-wider mb-1">Nama Lengkap</label>
-          <input type="text" v-model="name" required class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:bg-white focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition" placeholder="Nama Anda" />
+          <label class="block text-[11px] font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Nama Lengkap</label>
+          <input type="text" v-model="name" required class="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl text-sm text-gray-800 dark:text-gray-100 focus:bg-white dark:focus:bg-gray-900 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition" placeholder="Nama Anda" />
         </div>
 
         <div>
-          <label class="block text-[11px] font-semibold text-gray-700 uppercase tracking-wider mb-1">No. WhatsApp / Telepon</label>
-          <input type="tel" v-model="phone" required class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:bg-white focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition" placeholder="08xxxxxxxxxx" />
+          <label class="block text-[11px] font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">No. WhatsApp / Telepon</label>
+          <input type="tel" v-model="phone" required class="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl text-sm text-gray-800 dark:text-gray-100 focus:bg-white dark:focus:bg-gray-900 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition" placeholder="08xxxxxxxxxx" />
         </div>
 
         <div>
-          <label class="block text-[11px] font-semibold text-gray-700 uppercase tracking-wider mb-1">Email</label>
-          <input type="email" v-model="email" required class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:bg-white focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition" placeholder="nama@email.com" />
+          <label class="block text-[11px] font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Email</label>
+          <input type="email" v-model="email" required class="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl text-sm text-gray-800 dark:text-gray-100 focus:bg-white dark:focus:bg-gray-900 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition" placeholder="nama@email.com" />
         </div>
 
         <div>
-            <label class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">Password</label>
+            <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Password</label>
             <div class="relative flex items-center">
                 <input 
                     :type="showPassword ? 'text' : 'password'" 
                     v-model="password" 
                     required 
-                    class="w-full px-4 py-3 pr-12 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:bg-white focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition" 
+                    class="w-full px-4 py-3 pr-12 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl text-sm text-gray-800 dark:text-gray-100 focus:bg-white dark:focus:bg-gray-900 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition" 
                     placeholder="••••••••" 
                 />
                 
                 <button 
                     type="button" 
                     @click="showPassword = !showPassword" 
-                    class="absolute right-3.5 text-gray-400 hover:text-gray-700 transition focus:outline-none p-1"
+                    class="absolute right-3.5 text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-200 transition focus:outline-none p-1"
                 >
                     <svg v-if="showPassword" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
                       <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -118,20 +124,20 @@ const handleRegister = async () => {
         </div>
 
         <div>
-            <label class="block text-[11px] font-semibold text-gray-700 uppercase tracking-wider mb-1">Konfirmasi Password</label>
+            <label class="block text-[11px] font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Konfirmasi Password</label>
             <div class="relative flex items-center">
                 <input 
                     :type="showPasswordConfirmation ? 'text' : 'password'" 
                     v-model="passwordConfirmation" 
                     required 
-                    class="w-full px-4 py-2.5 pr-12 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:bg-white focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition" 
+                    class="w-full px-4 py-2.5 pr-12 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl text-sm text-gray-800 dark:text-gray-100 focus:bg-white dark:focus:bg-gray-900 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition" 
                     placeholder="••••••••" 
                 />
                 
                 <button 
                     type="button" 
                     @click="showPasswordConfirmation = !showPasswordConfirmation" 
-                    class="absolute right-3.5 text-gray-400 hover:text-gray-700 transition focus:outline-none p-1"
+                    class="absolute right-3.5 text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-200 transition focus:outline-none p-1"
                 >
                     <svg v-if="showPasswordConfirmation" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
                       <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -150,9 +156,9 @@ const handleRegister = async () => {
         </button>
       </form>
 
-      <p class="mt-4 text-center text-xs text-gray-500">
+      <p class="mt-4 text-center text-xs text-gray-500 dark:text-gray-400">
         Sudah punya akun? 
-        <router-link to="/login" class="font-semibold text-amber-600 hover:text-amber-500">Masuk di sini</router-link>
+        <router-link to="/login" class="font-semibold text-amber-600 dark:text-amber-400 hover:text-amber-500">Masuk di sini</router-link>
       </p>
     </div>
   </div>

@@ -1,13 +1,23 @@
 @import "tailwindcss";
 
+@variant dark (&:where(.dark, .dark *));
+
 html, body {
   margin: 0;
   padding: 0;
   width: 100%;
-  min-height: 100vh;
-  overflow-x: hidden;
+  height: 100dvh;
+  overflow: hidden;
   background-color: #ffffff;
+  color: #111827;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
+
+html.dark, body.dark {
+  background-color: #191f31 !important;
+  color: #f9fafb !important;
+}
+
 .no-scrollbar::-webkit-scrollbar {
     display: none;
 }
