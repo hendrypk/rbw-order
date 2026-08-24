@@ -5,17 +5,10 @@ const deferredPrompt = ref(null)
 const showBanner = ref(false)
 
 const handleBeforeInstallPrompt = (e) => {
-  // Cegah browser menampilkan prompt bawaan secara otomatis
   e.preventDefault()
   deferredPrompt.value = e
-
-  // Cek apakah pengguna sudah pernah menolak sebelumnya pada sesi ini
-  const dismissed = sessionStorage.getItem('pwa_prompt_dismissed')
-  
-  if (!dismissed) {
-    // Tampilkan banner/pop-up kustom kita
-    showBanner.value = true
-  }
+  // Munculkan banner secara elegan karena user sudah dalam kondisi login/aktif
+  showBanner.value = true
 }
 
 onMounted(() => {
@@ -29,40 +22,31 @@ onUnmounted(() => {
 const installPwa = async () => {
   if (!deferredPrompt.value) return
 
-  // Tampilkan prompt instalasi bawaan browser
+  // Dipicu murni dari klik user, dijamin lolos dari blokir Chrome
   deferredPrompt.value.prompt()
 
-  // Tunggu respon pilihan pengguna
   const { outcome } = await deferredPrompt.value.userChoice
-  
   if (outcome === 'accepted') {
-    console.log('Pengguna menyetujui instalasi PWA')
-  } else {
-    console.log('Pengguna menolak instalasi PWA')
+    console.log('PWA berhasil diinstal')
   }
 
-  // Bersihkan variabel prompt
   deferredPrompt.value = null
   showBanner.value = false
 }
 
 const dismissPrompt = () => {
   showBanner.value = false
-  // Simpan di sessionStorage agar tidak terus-menerus muncul dalam satu sesi kunjungan yang sama
-  sessionStorage.setItem('pwa_prompt_dismissed', 'true')
 }
 </script>
 
 <template>
   <transition name="slide-up">
+    <!-- Hanya tampil jika event PWA siap dan user sudah login -->
     <div v-if="showBanner" class="fixed bottom-20 left-4 right-4 z-50 max-w-md mx-auto bg-white rounded-2xl shadow-2xl border border-gray-100 p-4 flex items-center justify-between gap-4">
       <div class="flex items-center gap-3">
-        <div class="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center text-2xl shrink-0">
-          🍞
-        </div>
         <div>
           <h3 class="font-semibold text-gray-900 text-sm">Install Roti Bakar Wisuda</h3>
-          <p class="text-xs text-gray-500 mt-0.5">Akses lebih cepat dan mudah langsung dari layar utama HP kamu!</p>
+          <p class="text-xs text-gray-500 mt-0.5">Akses lebih cepat langsung dari layar HP kamu!</p>
         </div>
       </div>
       

@@ -1,11 +1,11 @@
 <script setup>
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
-import PwaInstallPrompt from '@/components/PwaInstallPrompt.vue'
+import AppHeader from '@/components/AppHeader.vue'
 
 const route = useRoute()
 
-const hideNavbar = computed(() => {
+const hideHeader = computed(() => {
   return ['login', 'register'].includes(route.name)
 })
 </script>
@@ -13,11 +13,12 @@ const hideNavbar = computed(() => {
 <template>
   <div class="h-dvh w-screen bg-white flex flex-col relative overflow-hidden">
     
-    <main class="flex-1 overflow-y-auto pb-20 bg-white scroll-smooth">
+    <AppHeader v-if="!hideHeader" />
+
+    <main class="flex-1 overflow-y-auto pb-24 bg-gray-50/50 scroll-smooth">
       <router-view />
     </main>
 
-    <PwaInstallPrompt />
 
   </div>
 </template>

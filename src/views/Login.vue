@@ -1,37 +1,33 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import api from '@/axios' // Menggunakan instance axios yang sudah dikonfigurasi withCredentials: true
+import api from '@/axios'
 
 const router = useRouter()
-const loginInput = ref('') // Bisa diisi email atau nomor HP
+const loginInput = ref('') 
 const password = ref('')
 const errorMessage = ref('')
 const isLoading = ref(false)
 const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'
+const showPassword = ref(false)
+const showPasswordConfirmation = ref(false)
 
 const handleLogin = async () => {
   errorMessage.value = ''
   isLoading.value = true
 
   try {
-    // 1. Ambil CSRF Cookie dari root backend Laravel
     await api.get(`${backendUrl}/sanctum/csrf-cookie`,)
 
-    // 2. Request login ke backend menggunakan key 'login' (email/phone) dan 'password'
     const response = await api.post('/login', {
       login: loginInput.value,
       password: password.value
     })
 
-    // --- TAMBAHKAN KODE INI ---
-    // 3. Simpan data customer ke localStorage agar bisa dipakai di Checkout/Profile tanpa error 401
     if (response.data && response.data.data && response.data.data.customer) {
       localStorage.setItem('customer_data', JSON.stringify(response.data.data.customer))
     }
-    // ---------------------------
-
-    // 4. Berhasil login, arahkan ke halaman katalog/dashboard
+    
     router.push({ name: 'catalog' })
 
   } catch (err) {
@@ -48,14 +44,13 @@ const handleLogin = async () => {
 </script>
 
 <template>
-  <div class="flex flex-col justify-center px-6 py-12 min-h-screen bg-white max-w-md mx-auto">
+  <div class="flex flex-col justify-center px-6 py-8 h-dvh w-screen bg-white max-w-md mx-auto overflow-y-auto">
     <div class="sm:mx-auto sm:w-full sm:max-w-sm mb-6">
       <h2 class="text-center text-2xl font-bold tracking-tight text-gray-900">Roti Bakar Wisuda</h2>
       <p class="text-center text-sm text-gray-600 mt-1">Silakan masuk untuk melanjutkan pesanan</p>
     </div>
 
     <div class="sm:mx-auto sm:w-full sm:max-w-sm">
-      <!-- Error Banner -->
       <div v-if="errorMessage" class="mb-4 p-3 bg-red-50 border border-red-200 text-red-600 text-xs rounded-xl text-center">
         {{ errorMessage }}
       </div>
@@ -67,9 +62,33 @@ const handleLogin = async () => {
         </div>
 
         <div>
-          <label class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">Password</label>
-          <input type="password" v-model="password" required class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:bg-white focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition" placeholder="••••••••" />
+            <label class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">Password</label>
+            <div class="relative flex items-center">
+                <input 
+                    :type="showPassword ? 'text' : 'password'" 
+                    v-model="password" 
+                    required 
+                    class="w-full px-4 py-3 pr-12 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:bg-white focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition" 
+                    placeholder="••••••••" 
+                />
+                
+                <button 
+                    type="button" 
+                    @click="showPassword = !showPassword" 
+                    class="absolute right-3.5 text-gray-400 hover:text-gray-700 transition focus:outline-none p-1"
+                >
+                    <svg v-if="showPassword" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+
+                    <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                    </svg>
+                </button>
+            </div>
         </div>
+
 
         <button type="submit" :disabled="isLoading" class="w-full py-3.5 px-4 rounded-xl text-sm font-bold text-white bg-amber-600 hover:bg-amber-700 active:scale-[0.98] transition shadow-md shadow-amber-600/20 disabled:opacity-50 mt-2">
           {{ isLoading ? 'Memproses...' : 'Masuk' }}
