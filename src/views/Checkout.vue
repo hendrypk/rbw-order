@@ -147,9 +147,10 @@ const submitCheckout = async () => {
 </script>
 
 <template>
-    <div class="max-w-md mx-auto bg-gray-50 dark:bg-gray-950 h-dvh flex flex-col relative overflow-hidden transition-colors duration-300">
 
-        <main class="main-scroll-container flex-1 overflow-y-auto p-4 space-y-4 pb-32 scroll-smooth">
+    <div class="max-w-md mx-auto bg-gray-50 dark:bg-gray-950 h-dvh flex flex-col relative overflow-hidden transition-colors duration-300">
+        
+        <main class="flex-1 overflow-y-auto p-4 space-y-6 scroll-smooth">
             <div v-if="errorMessage" class="p-3 bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 text-xs rounded-xl text-center font-medium">
                 {{ errorMessage }}
             </div>
@@ -249,13 +250,31 @@ const submitCheckout = async () => {
                 </div>
             </div>
         </main>
-
-        <div class="fixed bottom-0 left-0 right-0 max-w-md mx-auto p-4 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800 z-30 shadow-lg transition-colors">
+        <!-- Floating Bar Checkout (Menyesuaikan ukuran dan gaya dengan Katalog) -->
+        <div v-if="cartStore.items.length > 0" class="fixed bottom-4 left-4 right-4 max-w-md mx-auto z-40 animate-in slide-in-from-bottom-5 duration-300">
             <button 
                 @click="submitCheckout"
-                :disabled="loading || cartStore.items.length === 0"
-                class="bg-[#ff5722] hover:bg-[#f4511e] w-full py-3.5 rounded-2xl font-bold text-white text-xs tracking-wider uppercase shadow-md transition disabled:opacity-50">
-                {{ loading ? 'Memproses...' : 'Lanjut ke QRIS (Rp ' + formatPrice(cartStore.totalPrice) + ')' }}
+                :disabled="loading"
+                class="bg-gradient-to-r from-gray-900 to-gray-800 dark:from-gray-800 dark:to-gray-900 hover:from-black hover:to-gray-900 w-full rounded-2xl px-4 py-3.5 flex justify-between items-center shadow-xl shadow-black/15 active:scale-[0.98] transition border border-white/10 dark:border-gray-700 disabled:opacity-50 cursor-pointer">
+                
+                <div class="flex items-center gap-3 text-left">
+                    <div class="bg-orange-500 text-white p-2.5 rounded-xl shadow-md shadow-orange-500/30">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                        </svg>
+                    </div>
+                    <div class="text-white">
+                        <!-- <p class="text-[10px] uppercase font-bold tracking-widest text-orange-400">{{ cartStore.totalItems }} Item Terpilih</p> -->
+                        <p class="font-black text-xs leading-tight">Rp {{ formatPrice(cartStore.totalPrice) }}</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-1.5 text-white font-black text-xs bg-orange-500 hover:bg-orange-600 px-4 py-2.5 rounded-xl shadow-md shadow-orange-500/20 transition">
+                    <span>{{ loading ? 'Memproses...' : 'Lanjut QRIS' }}</span>
+                    <svg v-if="!loading" xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                    </svg>
+                </div>
             </button>
         </div>
     </div>

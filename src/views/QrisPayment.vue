@@ -89,8 +89,8 @@ onMounted(() => {
 </script>
 
 <template>
-    <div class="max-w-md mx-auto bg-gray-50 dark:bg-gray-950 h-dvh flex flex-col justify-between p-4 pb-8 overflow-hidden transition-colors duration-300 relative">
-        <main class="main-scroll-container flex-1 overflow-y-auto space-y-4 pr-1 pb-4 scroll-smooth">
+    <div class="max-w-md mx-auto bg-gray-50 dark:bg-gray-950 h-dvh flex flex-col justify-between p-4 overflow-hidden transition-colors duration-300 relative">
+        <main class="main-scroll-container flex-1 overflow-y-auto space-y-4 pr-1 scroll-smooth">
             <div>
                 <div class="bg-white dark:bg-gray-900 rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-gray-800 text-center space-y-4 transition-colors">
                     <div>

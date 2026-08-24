@@ -39,7 +39,9 @@ const fetchOrders = async () => {
         loading.value = true;
         errorMessage.value = '';
         
-        const response = await axios.get('/my-orders');
+        // Sesuaikan dengan prefix rute backend: /v1/user/my-orders
+        const response = await api.get('/v1/user/my-orders'); 
+        
         if (response.data && response.data.data) {
             orders.value = response.data.data;
         } else if (Array.isArray(response.data)) {
@@ -52,7 +54,6 @@ const fetchOrders = async () => {
         loading.value = false;
     }
 };
-
 onMounted(() => {
     fetchOrders();
 });

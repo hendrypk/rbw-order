@@ -37,28 +37,14 @@ const checkAuthWithBackend = async () => {
     }
 };
 
-router.beforeEach(async (to, from, next) => {
+router.beforeEach(async (to) => {
     const requiresAuth = to.meta.requiresAuth;
-    const guestOnly = to.meta.guestOnly;
 
-    // 1. HANYA JIKA HALAMAN PRIVAT: Lakukan pengecekan ketat ke backend
     if (requiresAuth) {
         const isAuthenticated = await checkAuthWithBackend();
-        if (isAuthenticated) {
-            next(); // Lolos masuk
-        } else {
-            next({ name: 'login' }); // Dicegat total ke login
+        if (!isAuthenticated) {
+            return { name: 'login' }; // Redirect bersih tanpa next()
         }
-    } 
-    // 2. JIKA HALAMAN TAMU (Login/Register): Tidak perlu tembak API /check yang bikin 401
-    else if (guestOnly) {
-        // (Opsional) Jika Anda ingin mencegah user yang sudah terlanjur login membuka /login,
-        // cukup cek flag ringan atau biarkan mereka akses form login. 
-        // Untuk amannya, kita langsung izinkan tamu masuk ke halaman login/register:
-        next();
-    } 
-    else {
-        next();
     }
 });
 

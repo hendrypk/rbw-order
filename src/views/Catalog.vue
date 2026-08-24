@@ -18,6 +18,7 @@ const activeCategory = ref(null);
 const isSearchOpen = ref(false);
 const searchQuery = ref('');
 const searchInput = ref(null); 
+const tabsContainer = ref(null);
 
 let isScrollingByClick = false;
 
@@ -118,6 +119,18 @@ const groupedProducts = computed(() => {
     }, {});
 });
 
+const scrollTabIntoView = (categoryName) => {
+    if (!tabsContainer.value) return;
+    const activeTab = tabsContainer.value.querySelector(`[data-tab-name="${CSS.escape(categoryName)}"]`);
+    if (activeTab) {
+        activeTab.scrollIntoView({
+            behavior: 'smooth',
+            inline: 'center',
+            block: 'nearest'
+        });
+    }
+};
+
 const scrollToCategory = (categoryName) => {
     activeCategory.value = categoryName;
     isScrollingByClick = true;
@@ -161,6 +174,7 @@ const setupScrollSpy = () => {
                 const categoryName = entry.target.getAttribute('data-category');
                 if (categoryName) {
                     activeCategory.value = categoryName;
+                    scrollTabIntoView(categoryName);
                 }
             }
         });
@@ -282,10 +296,11 @@ onUnmounted(() => {
             </div>
 
             <!-- TABS KATEGORI -->
-            <div class="flex overflow-x-auto px-4 py-2.5 gap-2 no-scrollbar border-t border-gray-100 dark:border-gray-800 bg-white/50 dark:bg-gray-900/50">
+            <div ref="tabsContainer" class="flex overflow-x-auto px-4 py-2.5 gap-2 no-scrollbar border-t border-gray-100 dark:border-gray-800 bg-white/50 dark:bg-gray-900/50">
                 <button 
                     v-for="(items, categoryName) in groupedProducts" 
                     :key="categoryName"
+                    :data-tab-name="categoryName"
                     @click="scrollToCategory(categoryName)"
                     :class="[
                         'px-4 py-2 text-xs font-bold whitespace-nowrap rounded-full transition-all duration-200 shadow-sm active:scale-95',
