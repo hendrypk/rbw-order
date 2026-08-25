@@ -149,8 +149,27 @@ const submitCheckout = async () => {
 <template>
 
     <div class="max-w-md mx-auto bg-gray-50 dark:bg-gray-950 h-dvh flex flex-col relative overflow-hidden transition-colors duration-300">
-        
-        <main class="flex-1 overflow-y-auto p-4 space-y-6 scroll-smooth">
+        <main v-if="cartStore.items.length === 0"  class="flex-1 overflow-y-auto p-4 space-y-6 scroll-smooth flex flex-col items-center justify-center text-center">
+            <div class="w-full max-w-xs space-y-4 animate-in fade-in duration-300">
+                <div class="w-20 h-20 bg-orange-100 dark:bg-orange-500/10 text-orange-500 rounded-full flex items-center justify-center mx-auto shadow-inner">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                    </svg>
+                </div>
+                <div class="space-y-1">
+                    <h3 class="font-black text-gray-900 dark:text-white text-base">Ups, keranjangmu kosong!</h3>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Yuk pilih menu favoritmu terlebih dahulu sebelum melanjutkan pesanan.</p>
+                </div>
+                <div class="pt-2">
+                    <button 
+                        @click="router.push({ name: 'catalog' })" 
+                        class="bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs px-6 py-3 rounded-2xl shadow-lg shadow-orange-500/30 transition active:scale-95 cursor-pointer">
+                        Pilih Menu Sekarang
+                    </button>
+                </div>
+            </div>
+        </main>
+        <main v-else class="flex-1 overflow-y-auto p-4 h-full space-y-6 scroll-smooth">
             <div v-if="errorMessage" class="p-3 bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 text-xs rounded-xl text-center font-medium">
                 {{ errorMessage }}
             </div>
@@ -221,13 +240,7 @@ const submitCheckout = async () => {
             </div>
 
             <div class="space-y-2.5 pt-2">
-                <h2 class="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider px-1">Informasi Pengantaran</h2>
-                <input 
-                    v-model="shippingAddress" 
-                    type="text" 
-                    placeholder="Nomor Meja atau Alamat" 
-                    class="w-full p-3 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl text-xs text-gray-800 dark:text-gray-100 outline-none focus:border-gray-300 dark:focus:border-gray-600 transition"
-                />
+                <h2 class="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider px-1">Catatan</h2>
                 <textarea 
                     v-model="globalNotes" 
                     placeholder="Catatan tambahan untuk pesanan secara keseluruhan..." 
@@ -250,7 +263,6 @@ const submitCheckout = async () => {
                 </div>
             </div>
         </main>
-        <!-- Floating Bar Checkout (Menyesuaikan ukuran dan gaya dengan Katalog) -->
         <div v-if="cartStore.items.length > 0" class="fixed bottom-4 left-4 right-4 max-w-md mx-auto z-40 animate-in slide-in-from-bottom-5 duration-300">
             <button 
                 @click="submitCheckout"
@@ -264,7 +276,6 @@ const submitCheckout = async () => {
                         </svg>
                     </div>
                     <div class="text-white">
-                        <!-- <p class="text-[10px] uppercase font-bold tracking-widest text-orange-400">{{ cartStore.totalItems }} Item Terpilih</p> -->
                         <p class="font-black text-xs leading-tight">Rp {{ formatPrice(cartStore.totalPrice) }}</p>
                     </div>
                 </div>

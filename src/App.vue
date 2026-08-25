@@ -17,7 +17,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="h-dvh w-screen bg-white dark:bg-gray-950 flex flex-col relative overflow-hidden transition-colors duration-300">
+  <div class="min-h-dvh w-screen bg-white dark:bg-gray-950 flex flex-col relative transition-colors duration-300">
     
     <AppHeader v-if="!hideHeader" />
 

@@ -3,20 +3,20 @@ import { VOUCHERS, DELIVERY_OPTIONS, PAYMENT_METHODS } from '@/data/mockData';
 
 export const useCartStore = defineStore('cart', {
   state: () => ({
-    items: [], 
+    // Mengambil data awal dari localStorage jika ada, agar aman saat halaman di-reload
+    items: JSON.parse(localStorage.getItem('cart_items')) || [], 
     restaurant: null, 
     appliedVoucher: null, 
     selectedDeliveryOption: DELIVERY_OPTIONS[1], 
     selectedPaymentMethod: PAYMENT_METHODS[0], 
     deliveryNote: '',
     
-    // --- TAMBAHAN BARU UNTUK OPSI PESANAN ---
-    orderType: 'delivery', // Pilihan: 'delivery' atau 'pickup'
-    pickupTime: 'Segera (As Soon As Possible)', // Waktu pilihan jika memilih pickup
+    // --- OPSI PESANAN ---
+    orderType: localStorage.getItem('cart_order_type') || 'delivery', 
+    pickupTime: 'Segera (As Soon As Possible)', 
   }),
 
   getters: {
-    // Menggunakan totalItems agar sinkron dengan komponen Catalog.vue kamu
     totalItems: (state) => {
       return state.items.reduce((total, item) => total + item.quantity, 0);
     },
@@ -37,7 +37,6 @@ export const useCartStore = defineStore('cart', {
     },
 
     deliveryFee: (state) => {
-      // Jika mode pickup, ongkir otomatis 0 (gratis)
       if (state.orderType === 'pickup') return 0;
       if (!state.restaurant) return 0;
       if (state.selectedDeliveryOption) {
@@ -62,7 +61,6 @@ export const useCartStore = defineStore('cart', {
       } else if (v.discountType === 'fixed') {
         return v.discountValue;
       } else if (v.discountType === 'shipping') {
-        // Kalau pickup dan voucher diskon ongkir, diabaikan atau disesuaikan
         if (state.orderType === 'pickup') return 0;
         return Math.min(v.discountValue, state.deliveryFee);
       }
@@ -77,6 +75,12 @@ export const useCartStore = defineStore('cart', {
   },
 
   actions: {
+    // Helper internal untuk menyimpan state ke localStorage
+    saveToStorage() {
+        localStorage.setItem('cart_items', JSON.stringify(this.items));
+        localStorage.setItem('cart_order_type', this.orderType);
+    },
+
     addItem(product) {
         const productId = product.id || product.uuid || product.menu_id;
 
@@ -95,22 +99,28 @@ export const useCartStore = defineStore('cart', {
                 name: product.name,
                 price: product.price,
                 image: product.image || product.image_path,
-                quantity: product.quantity || 1
+                quantity: product.quantity || 1,
+                itemNote: product.itemNote || ''
             });
         }
+        
+        this.saveToStorage(); // Simpan otomatis setiap item bertambah
     },
     
     removeItem(productId) {
         this.items = this.items.filter(item => item.id !== productId);
+        this.saveToStorage(); // Simpan otomatis saat item dihapus
     },
 
     clearCart() {
         this.items = [];
+        localStorage.removeItem('cart_items');
+        localStorage.removeItem('cart_order_type');
     },
 
-    // --- TAMBAHAN ACTION UNTUK MENGUBAH TIPE PESANAN ---
     setOrderType(type) {
-        this.orderType = type; // 'delivery' atau 'pickup'
+        this.orderType = type; 
+        this.saveToStorage();
     },
 
     setPickupTime(time) {

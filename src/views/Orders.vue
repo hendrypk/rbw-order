@@ -39,14 +39,20 @@ const fetchOrders = async () => {
         loading.value = true;
         errorMessage.value = '';
         
-        // Sesuaikan dengan prefix rute backend: /v1/user/my-orders
-        const response = await api.get('/v1/user/my-orders'); 
+        const response = await axios.get('/my-orders'); 
         
-        if (response.data && response.data.data) {
-            orders.value = response.data.data;
-        } else if (Array.isArray(response.data)) {
+        console.log('Respon API Orders:', response.data); 
+
+        if (Array.isArray(response.data)) {
             orders.value = response.data;
+        } else if (response.data?.data && Array.isArray(response.data.data)) {
+            orders.value = response.data.data;
+        } else if (response.data?.orders && Array.isArray(response.data.orders)) {
+            orders.value = response.data.orders;
+        } else {
+            orders.value = [];
         }
+
     } catch (error) {
         console.error('Gagal memuat riwayat pesanan:', error);
         errorMessage.value = error.response?.data?.message || 'Gagal memuat riwayat pesanan dari server.';
@@ -54,6 +60,7 @@ const fetchOrders = async () => {
         loading.value = false;
     }
 };
+
 onMounted(() => {
     fetchOrders();
 });
@@ -109,9 +116,9 @@ onMounted(() => {
                         </div>
 
                         <button 
-                            @click="router.push({ name: 'qris', query: { order_number: order.order_number, amount: order.final_total || order.total_amount } })" 
+                            @click="router.push({ name: 'order-detail', params: { order_number: order.order_number } })" 
                             class="bg-orange-50 dark:bg-orange-500/10 hover:bg-orange-500 hover:text-white dark:hover:bg-orange-500 text-orange-600 dark:text-orange-400 border border-orange-200/60 dark:border-orange-500/20 px-3.5 py-1.5 rounded-xl text-xs font-bold transition">
-                            Detail / Bayar
+                            Lihat
                         </button>
                     </div>
 

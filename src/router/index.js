@@ -9,12 +9,14 @@ import Checkout from '@/views/Checkout.vue';
 import QrisPayment from '@/views/QrisPayment.vue';
 import api from '@/axios';
 import Orders from '@/views/Orders.vue';
+import OrderDetail from '@/views/OrderDetail.vue';
 
 const routes = [
     { path: '/', name: 'catalog', component: Catalog, meta: { requiresAuth: true } },
     { path: '/dashboard', name: 'dashboard', component: Dashboard, meta: { requiresAuth: true } },
     { path: '/checkout', name: 'checkout', component: Checkout, meta: { requiresAuth: true } },
     { path: '/orders', name: 'orders', component: Orders, meta: { requiresAuth: true } },
+    { path: '/order/:order_number', name: 'order-detail', component: OrderDetail, meta: { requiresAuth: true } },
     { path: '/checkout/pay', name: 'qris', component: QrisPayment, meta: { requiresAuth: true } },
     { path: '/cart', name: 'cart', component: Cart, meta: { requiresAuth: true } },
     { path: '/profile', name: 'profile', component: Profile, meta: { requiresAuth: true } },
