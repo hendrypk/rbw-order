@@ -392,7 +392,7 @@ onUnmounted(() => {
                             </p>
                         </div>
 
-<div class="flex items-center justify-between mt-3.5">
+                        <div class="flex items-center justify-between mt-3.5">
                             <span class="font-black text-gray-900 dark:text-white text-sm">Rp {{ formatPrice(product.price) }}</span>
 
                             <div class="py-1">
@@ -421,8 +421,8 @@ onUnmounted(() => {
                 :class="[
                     'pointer-events-auto font-black text-xs px-6 py-2.5 rounded-full flex items-center gap-2 transition-all shadow-lg active:scale-95',
                     isCategoryModalOpen 
-                        ? 'bg-red-600 hover:bg-red-700 text-white shadow-red-600/30' 
-                        : 'bg-gray-900 text-white shadow-black/20'
+                        ? 'bg-gray-900 text-white shadow-black/20 border-1 border-gray-600' 
+                        : 'bg-gray-900 text-white shadow-black/20 border-1 border-gray-600'
                 ]"
             >
                 <span class="text-sm">{{ isCategoryModalOpen ? '✕' : '🍽️' }}</span>
