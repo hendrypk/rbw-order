@@ -414,7 +414,6 @@ onUnmounted(() => {
             </div>
         </main>
 
-<!-- FLOATING TOMBOL KATEGORI (BERUBAH MENJADI TOMBOL CLOSE SAAT MODAL DIBUKA, POSISI TEPAT DI BAWAH LIST MENU) -->
         <div class="fixed bottom-20 left-0 right-0 max-w-md mx-auto z-50 px-4 flex justify-center pointer-events-none">
             <button 
                 @click="isCategoryModalOpen = !isCategoryModalOpen"
@@ -491,13 +490,10 @@ onUnmounted(() => {
             </div>
         </div>
 
-        <!-- FLOATING CHECKOUT BAR TERPISAH (TOTAL ITEM + TOMBOL CHECKOUT TERPISAH) -->
         <div 
             v-if="cartStore.totalItems > 0" 
             class="fixed bottom-4 left-4 right-4 max-w-md mx-auto z-40 animate-in slide-in-from-bottom-5 duration-300 flex items-center gap-2"
         >
-            <!-- 1. Tombol Total Item (Bisa diklik atau di-swipe up untuk memunculkan list item selected) -->
-          <!-- Tombol Icon Cart Saja (Icon + Badge Angka Total Item di Atasnya), Tombol Checkout Terpisah -->
             <div 
                 @click="isCartOpen = !isCartOpen"
                 @touchstart="handleTouchStart"
@@ -513,8 +509,7 @@ onUnmounted(() => {
                 </span>
             </div>
 
-            <!-- 2. Tombol Checkout Terpisah -->
-<router-link 
+             <router-link 
                 to="/checkout" 
                 class="bg-orange-500 hover:bg-orange-600 text-white rounded-2xl px-5 py-3 shadow-xl shadow-orange-500/20 transition active:scale-[0.98] flex items-center justify-between flex-1 min-w-0"
             >
