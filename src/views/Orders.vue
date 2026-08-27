@@ -94,7 +94,7 @@ onMounted(() => {
                             <h3 class="text-xs font-black text-gray-900 dark:text-white mt-0.5">{{ order.order_number }}</h3>
                         </div>
                         <span :class="['text-[10px] font-bold px-2.5 py-1 rounded-full border uppercase tracking-wider', getStatusBadge(order.status || order.payment_status)]">
-                            {{ order.status || order.payment_status || 'Pending' }}
+                            {{ order.status }}
                         </span>
                     </div>
 

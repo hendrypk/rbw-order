@@ -20,6 +20,11 @@ const scheduleType = ref('now');
 const scheduledDate = ref('');
 const scheduledTime = ref('17:30');
 
+// --- STATE VOUCHER / PROMO ---
+const voucherCodeInput = ref('');
+const appliedVoucher = ref(null);
+const isValidatingVoucher = ref(false);
+
 const timeSlots = computed(() => {
     const slots = [];
     let currentHour = 17;
@@ -75,6 +80,63 @@ const formatPrice = (price) => {
     return Number(price).toLocaleString('id-ID');
 };
 
+// --- FUNGSI VALIDASI & TERAPKAN VOUCHER ---
+const applyVoucher = async () => {
+    if (!voucherCodeInput.value.trim()) {
+        errorMessage.value = 'Masukkan kode voucher terlebih dahulu.';
+        return;
+    }
+
+    isValidatingVoucher.value = true;
+    errorMessage.value = '';
+
+    try {
+        // Format item keranjang agar sesuai dengan validasi backend
+        const cartItemsForValidation = cartStore.items.map(item => ({
+            menu_id: item.id,
+            subtotal: item.price * item.quantity
+        }));
+
+        const response = await axios.post('/voucher/validate', {
+            code: voucherCodeInput.value,
+            items: cartItemsForValidation
+        });
+
+        if (response.data.success) {
+            const resData = response.data.data;
+            appliedVoucher.value = {
+                voucher_id: resData.id || resData.voucher_id,
+                code: resData.code,
+                name: resData.name,
+                type: resData.type,
+                value: resData.value,
+                discount_amount: resData.discount_amount
+            };
+            voucherCodeInput.value = '';
+        }
+    } catch (error) {
+        errorMessage.value = error.response?.data?.message || 'Kode voucher tidak valid atau gagal diterapkan.';
+        appliedVoucher.value = null;
+    } finally {
+        isValidatingVoucher.value = false;
+    }
+};
+
+const removeVoucher = () => {
+    appliedVoucher.value = null;
+    errorMessage.value = '';
+};
+
+// --- COMPUTED FINALS DENGAN DISKON VOUCHER ---
+const totalDiscount = computed(() => {
+    return appliedVoucher.value ? Number(appliedVoucher.value.discount_amount) : 0;
+});
+
+const finalPrice = computed(() => {
+    const total = cartStore.totalPrice - totalDiscount.value;
+    return total < 0 ? 0 : total;
+});
+
 const submitCheckout = async () => {
     if (cartStore.items.length === 0) return;
 
@@ -104,6 +166,8 @@ const submitCheckout = async () => {
             customer_phone: currentUser.value.phone || '08123456789',
             shipping_address: shippingAddress.value || 'Dine In',
             notes: combinedNotes,
+            voucher_id: appliedVoucher.value ? appliedVoucher.value.voucher_id : null, // ⬅️ Kirim voucher_id
+            discount: totalDiscount.value, // ⬅️ Kirim nominal diskon
             items: cartStore.items.map(item => ({
                 menu_id: item.id,
                 quantity: item.quantity
@@ -121,7 +185,7 @@ const submitCheckout = async () => {
                 name: 'qris',
                 query: {
                     order_number: orderData.order_number,
-                    amount: orderData.final_total || cartStore.totalPrice
+                    amount: orderData.final_total || finalPrice.value
                 }
             });
         } else {
@@ -147,9 +211,8 @@ const submitCheckout = async () => {
 </script>
 
 <template>
-
     <div class="max-w-md mx-auto bg-gray-50 dark:bg-gray-950 h-dvh flex flex-col relative overflow-hidden transition-colors duration-300">
-        <main v-if="cartStore.items.length === 0"  class="flex-1 overflow-y-auto p-4 space-y-6 scroll-smooth flex flex-col items-center justify-center text-center">
+        <main v-if="cartStore.items.length === 0" class="flex-1 overflow-y-auto p-4 space-y-6 scroll-smooth flex flex-col items-center justify-center text-center">
             <div class="w-full max-w-xs space-y-4 animate-in fade-in duration-300">
                 <div class="w-20 h-20 bg-orange-100 dark:bg-orange-500/10 text-orange-500 rounded-full flex items-center justify-center mx-auto shadow-inner">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -169,7 +232,8 @@ const submitCheckout = async () => {
                 </div>
             </div>
         </main>
-        <main v-else class="flex-1 overflow-y-auto p-4 h-full space-y-6 scroll-smooth">
+        
+        <main v-else class="flex-1 overflow-y-auto p-4 h-full space-y-6 scroll-smooth pb-28">
             <div v-if="errorMessage" class="p-3 bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 text-xs rounded-xl text-center font-medium">
                 {{ errorMessage }}
             </div>
@@ -196,11 +260,41 @@ const submitCheckout = async () => {
                 </div>
             </div>
 
+            <!-- SECTION VOUCHER / KODE PROMO -->
+            <div class="bg-white dark:bg-gray-900 p-3.5 rounded-2xl border border-gray-100 dark:border-gray-800 space-y-2.5 shadow-sm transition-colors">
+                <h2 class="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider px-1">Punya Voucher / Promo?</h2>
+                
+                <div v-if="appliedVoucher" class="p-3 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 rounded-xl flex items-center justify-between">
+                    <div>
+                        <span class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider block">Voucher Terpakai</span>
+                        <h4 class="font-bold text-xs text-emerald-900 dark:text-emerald-200">{{ appliedVoucher.name }} ({{ appliedVoucher.code }})</h4>
+                        <span class="text-[11px] text-emerald-700 dark:text-emerald-300 font-mono">Potongan: Rp {{ formatPrice(appliedVoucher.discount_amount) }}</span>
+                    </div>
+                    <button @click="removeVoucher" class="px-2.5 py-1 bg-red-100 hover:bg-red-200 text-red-600 rounded-lg text-xs font-bold transition cursor-pointer">
+                        Lepas
+                    </button>
+                </div>
+
+                <div v-else class="flex gap-2">
+                    <input 
+                        v-model="voucherCodeInput" 
+                        type="text" 
+                        placeholder="Ketik kode voucher..." 
+                        class="flex-1 p-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs uppercase text-gray-800 dark:text-gray-100 outline-none font-bold"
+                    />
+                    <button 
+                        @click="applyVoucher" 
+                        :disabled="isValidatingVoucher"
+                        class="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs rounded-xl shadow-md transition disabled:opacity-50 cursor-pointer">
+                        {{ isValidatingVoucher ? 'Memeriksa...' : 'Gunakan' }}
+                    </button>
+                </div>
+            </div>
+
             <div>
                 <h2 class="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2 px-1">Menu yang Dipilih</h2>
                 <div class="space-y-3">
                     <div v-for="item in cartStore.items" :key="item.id" class="bg-white dark:bg-gray-900 p-3 rounded-2xl border border-gray-100 dark:border-gray-800 flex gap-3 items-start shadow-sm transition-colors">
-                        
                         <div class="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-xl overflow-hidden flex-shrink-0 relative">
                             <img 
                                 :src="item.image || 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'100\' height=\'100\' viewBox=\'0 0 100 100\'%3E%3Crect width=\'100\' height=\'100\' fill=\'%23f3f4f6\'/%3E%3Ctext x=\'50\' y=\'50\' font-family=\'sans-serif\' font-size=\'11\' font-weight=\'600\' fill=\'%239ca3af\' text-anchor=\'middle\' dominant-baseline=\'middle\'%3ENo Image%3C/text%3E%3C/svg%3E'" 
@@ -234,7 +328,6 @@ const submitCheckout = async () => {
                                 />
                             </div>
                         </div>
-
                     </div>
                 </div>
             </div>
@@ -251,18 +344,23 @@ const submitCheckout = async () => {
 
             <div class="bg-orange-50/50 dark:bg-orange-500/10 p-4 rounded-2xl border border-orange-100 dark:border-orange-500/20 space-y-2 transition-colors">
                 <div class="flex justify-between text-xs text-gray-600 dark:text-gray-400">
-                    <span>Total Item</span>
-                    <span class="font-semibold">{{ cartStore.totalItems }} pcs</span>
+                    <span>Subtotal</span>
+                    <span class="font-semibold">Rp {{ formatPrice(cartStore.totalPrice) }}</span>
+                </div>
+                <div v-if="appliedVoucher" class="flex justify-between text-xs text-emerald-600 dark:text-emerald-400 font-semibold">
+                    <span>Diskon Voucher ({{ appliedVoucher.code }})</span>
+                    <span>- Rp {{ formatPrice(totalDiscount) }}</span>
                 </div>
                 <div class="flex justify-between items-center pt-2 border-t border-orange-200/60 dark:border-orange-500/20">
                     <span class="font-bold text-gray-900 dark:text-white text-sm">Total Pembayaran</span>
-                    <span class="font-extrabold text-base text-[#ff5722]">Rp {{ formatPrice(cartStore.totalPrice) }}</span>
+                    <span class="font-extrabold text-base text-[#ff5722]">Rp {{ formatPrice(finalPrice) }}</span>
                 </div>
                 <div class="text-[10px] text-center font-bold text-orange-700 dark:text-orange-400 bg-orange-100/60 dark:bg-orange-500/20 py-1 rounded-lg mt-1">
                     Metode Pembayaran: QRIS Only
                 </div>
             </div>
         </main>
+
         <div v-if="cartStore.items.length > 0" class="fixed bottom-4 left-4 right-4 max-w-md mx-auto z-40 animate-in slide-in-from-bottom-5 duration-300">
             <button 
                 @click="submitCheckout"
@@ -276,7 +374,7 @@ const submitCheckout = async () => {
                         </svg>
                     </div>
                     <div class="text-white">
-                        <p class="font-black text-xs leading-tight">Rp {{ formatPrice(cartStore.totalPrice) }}</p>
+                        <p class="font-black text-xs leading-tight">Rp {{ formatPrice(finalPrice) }}</p>
                     </div>
                 </div>
 
