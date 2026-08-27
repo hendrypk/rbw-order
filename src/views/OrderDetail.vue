@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import axios from '@/axios';
 
@@ -16,12 +16,19 @@ const formatPrice = (price) => {
     return Number(price).toLocaleString('id-ID');
 };
 
-// Fungsi format tanggal/waktu agar rapi (contoh: 27 Agu 2026, 17:30)
+// Fungsi format tanggal/waktu agar rapi
 const formatDate = (dateString) => {
     if (!dateString) return '-';
     const options = { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' };
     return new Date(dateString).toLocaleDateString('id-ID', options);
 };
+
+// Computed untuk mendeteksi poin dari transaksi ini (berdasarkan relasi points / customer_points)
+const transactionPoint = computed(() => {
+    if (!order.value || !order.value.points) return null;
+    // Jika points berupa array atau relasi hasMany / hasOne
+    return Array.isArray(order.value.points) ? order.value.points[0] : order.value.points;
+});
 
 const fetchOrderDetail = async () => {
     try {
@@ -102,7 +109,7 @@ onMounted(() => {
                         <span class="font-mono">Rp {{ formatPrice(order.subtotal) }}</span>
                     </div>
 
-                    <!-- Diskon Voucher dengan warna standar & thin -->
+                    <!-- Diskon Voucher -->
                     <div v-if="order.voucher_id || (order.discount && order.discount > 0)" class="flex justify-between text-gray-500 dark:text-gray-400 font-light">
                         <span>Diskon Voucher {{ order.voucher?.code ? '(' + order.voucher.code + ')' : '' }}</span>
                         <span class="font-mono">- Rp {{ formatPrice(order.discount) }}</span>
@@ -111,6 +118,18 @@ onMounted(() => {
                     <div class="flex justify-between items-center pt-2 border-t border-gray-100 dark:border-gray-800 text-sm font-black text-gray-900 dark:text-white">
                         <span>Total Pembayaran</span>
                         <span class="font-mono text-[#ff5722]">Rp {{ formatPrice(order.final_total) }}</span>
+                    </div>
+
+                    <!-- 🎁 INFORMASI POIN DARI TRANSAKSI (Hanya muncul jika pesanan lunas dan ada record poin) -->
+                    <div v-if="(order.status === 'paid' || order.status === 'completed') && transactionPoint" class="mt-3 pt-3 border-t border-dashed border-gray-100 dark:border-gray-800">
+                        <div v-if="transactionPoint.type === 'earned' && transactionPoint.points > 0" class="p-2.5 bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 rounded-xl flex items-center justify-between font-semibold">
+                            <span>✨ Poin Didapat</span>
+                            <span class="font-mono font-bold">+{{ transactionPoint.points }} Poin</span>
+                        </div>
+                        <div v-else-if="transactionPoint.type === 'redeemed' && transactionPoint.points < 0" class="p-2.5 bg-orange-50 dark:bg-orange-500/10 text-orange-700 dark:text-orange-400 rounded-xl flex items-center justify-between font-semibold">
+                            <span>🎁 Poin Digunakan</span>
+                            <span class="font-mono font-bold">{{ transactionPoint.points }} Poin</span>
+                        </div>
                     </div>
                 </div>
 
