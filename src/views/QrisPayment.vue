@@ -329,7 +329,7 @@ onUnmounted(() => {
             </button>
         </div>
 
-<div v-if="showModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200">
+        <div v-if="showModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200">
             <div class="bg-white dark:bg-gray-900 w-full max-w-xs rounded-3xl p-6 text-center shadow-2xl border border-gray-100 dark:border-gray-800 space-y-4 animate-in zoom-in-95 duration-200">
                 
                 <div class="w-14 h-14 mx-auto rounded-full flex items-center justify-center text-2xl" :class="{
@@ -346,26 +346,14 @@ onUnmounted(() => {
                     <h3 class="text-sm font-extrabold text-gray-900 dark:text-white">
                         {{ modalStatus === 'success' ? 'Hore, Berhasil!' : modalStatus === 'pending' ? 'Belum Lunas' : 'Ups, Ada Kendala' }}
                     </h3>
-                    
-                    <!-- Pesan reguler / kendala -->
-                    <p v-if="modalStatus !== 'success'" class="text-xs text-gray-500 dark:text-gray-400 mt-1 leading-relaxed">
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 leading-relaxed">
                         {{ modalMessage }}
                     </p>
-
-                    <!-- Format khusus ketika sukses pembayaran -->
-                    <div v-if="modalStatus === 'success'" class="mt-2 space-y-1 text-xs">
-                        <p class="font-bold text-gray-800 dark:text-gray-200">
-                            Pembayaran Senilai Rp {{ Number(amount || 0).toLocaleString('id-ID') }} Diterima
-                        </p>
-                        <p class="text-amber-600 dark:text-amber-400 font-semibold">
-                            kamu mendapatkan {{ (Math.floor((amount || 0) / 1000) * 10).toLocaleString('id-ID') }} poin dari transaksi ini
-                        </p>
-                    </div>
                 </div>
 
                 <button 
                     @click="handleModalAction"
-                    class="w-full py-3 rounded-xl font-bold text-xs text-white shadow-md transition active:scale-95 cursor-pointer"
+                    class="w-full py-3 rounded-xl font-bold text-xs text-white shadow-md transition active:scale-95"
                     :class="{
                         'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/20': modalStatus === 'success',
                         'bg-[#ff5722] hover:bg-[#f4511e] shadow-orange-500/20': modalStatus !== 'success'

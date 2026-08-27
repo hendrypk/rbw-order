@@ -20,6 +20,12 @@ const searchQuery = ref('');
 const searchInput = ref(null); 
 const tabsContainer = ref(null);
 
+// --- STATE TAMBAHAN UNTUK MODAL KATEGORI & SWIPE UP CART ---
+const isCategoryModalOpen = ref(false);
+const isCartOpen = ref(false);
+const touchStartY = ref(0);
+const touchEndY = ref(0);
+
 let isScrollingByClick = false;
 
 const toggleSearch = async () => {
@@ -134,6 +140,7 @@ const scrollTabIntoView = (categoryName) => {
 const scrollToCategory = (categoryName) => {
     activeCategory.value = categoryName;
     isScrollingByClick = true;
+    isCategoryModalOpen.value = false; // Tutup modal kategori setelah dipilih
 
     const elementId = `category-${categoryName.replace(/\s+/g, '-')}`;
     const el = document.getElementById(elementId);
@@ -220,6 +227,9 @@ const handleDecrease = (product) => {
             item.quantity -= 1;
         } else {
             cartStore.removeItem(productId);
+            if (cartStore.totalItems === 0) {
+                isCartOpen.value = false;
+            }
         }
     }
 };
@@ -227,6 +237,30 @@ const handleDecrease = (product) => {
 const cartTotalPrice = computed(() => {
     return cartStore.items.reduce((total, item) => total + (item.price * item.quantity), 0);
 });
+
+// --- LOGIKA TOUCH / SWIPE UP UNTUK CHECKOUT BAR ---
+const handleTouchStart = (e) => {
+    touchStartY.value = e.touches[0].clientY;
+};
+
+const handleTouchMove = (e) => {
+    touchEndY.value = e.touches[0].clientY;
+};
+
+const handleTouchEnd = () => {
+    const diff = touchStartY.value - touchEndY.value;
+    const threshold = 40; // Batas jarak swipe
+
+    if (diff > threshold) {
+        // Swipe Up -> Buka detail keranjang
+        if (cartStore.totalItems > 0) {
+            isCartOpen.value = true;
+        }
+    } else if (diff < -threshold) {
+        // Swipe Down -> Tutup detail keranjang
+        isCartOpen.value = false;
+    }
+};
 
 onMounted(() => {
     fetchProducts();
@@ -295,22 +329,7 @@ onUnmounted(() => {
                 </div>
             </div>
 
-            <!-- TABS KATEGORI -->
-            <div ref="tabsContainer" class="flex overflow-x-auto px-4 py-2.5 gap-2 no-scrollbar border-t border-gray-100 dark:border-gray-800 bg-white/50 dark:bg-gray-900/50">
-                <button 
-                    v-for="(items, categoryName) in groupedProducts" 
-                    :key="categoryName"
-                    :data-tab-name="categoryName"
-                    @click="scrollToCategory(categoryName)"
-                    :class="[
-                        'px-4 py-2 text-xs font-bold whitespace-nowrap rounded-full transition-all duration-200 shadow-sm active:scale-95',
-                        activeCategory === categoryName 
-                            ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-orange-500/25 shadow-md' 
-                            : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white'
-                    ]">
-                    {{ categoryName }}
-                </button>
-            </div>
+            <!-- TABS KATEGORI (DIHAPUS DARI HEADER, DIGANTI TOMBOL MODAL KATEGORI DI BAWAH) -->
         </header>
 
         <!-- SEARCH BAR -->
@@ -334,7 +353,7 @@ onUnmounted(() => {
         </div>
 
         <!-- MAIN CONTAINER (SCROLLABLE AREA) -->
-        <main class="main-scroll-container flex-1 overflow-y-auto p-4 space-y-6 pb-32 scroll-smooth">
+        <main class="main-scroll-container flex-1 overflow-y-auto p-4 space-y-6 pb-36 scroll-smooth">
             <div v-if="loading" class="text-center py-12 text-gray-400 dark:text-gray-500 text-xs font-medium">Lagi nyiapin menu terenak buat kamu... 🍞</div>
             <div v-else-if="errorMessage" class="bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 p-4 rounded-2xl text-xs text-center font-medium">{{ errorMessage }}</div>
             <div v-else-if="products.length === 0" class="text-center py-12 text-gray-400 dark:text-gray-500 text-xs font-medium">Belum ada menu tersedia nih.</div>
@@ -348,7 +367,7 @@ onUnmounted(() => {
             >
                 <div class="flex items-center justify-between">
                     <h2 class="text-sm font-black text-gray-900 dark:text-white tracking-tight flex items-center gap-1.5">
-                        <span class="w-2 h-2 rounded-full bg-orange-500"></span>
+                        <!-- <span class="w-2 h-2 rounded-full bg-orange-500"></span> -->
                         {{ categoryName }}
                     </h2>
                     <span class="text-[10px] font-bold text-gray-400 dark:text-gray-500 bg-gray-200/50 dark:bg-gray-800 px-2 py-0.5 rounded-full">{{ items.length }} Pilihan</span>
@@ -373,20 +392,20 @@ onUnmounted(() => {
                             </p>
                         </div>
 
-                        <div class="flex items-center justify-between mt-2.5">
-                            <span class="font-black text-gray-900 dark:text-white text-xs">Rp {{ formatPrice(product.price) }}</span>
+<div class="flex items-center justify-between mt-3.5">
+                            <span class="font-black text-gray-900 dark:text-white text-sm">Rp {{ formatPrice(product.price) }}</span>
 
-                            <div>
+                            <div class="py-1">
                                 <button 
                                     v-if="getCartItemQuantity(product) === 0" @click="handleAdd(product)"
-                                    class="bg-orange-50 dark:bg-orange-500/10 hover:bg-orange-500 hover:text-white dark:hover:bg-orange-500 text-orange-600 dark:text-orange-400 border border-orange-200/60 dark:border-orange-500/20 px-4 py-1.5 rounded-xl text-xs font-bold transition-all duration-200 shadow-sm active:scale-95">
+                                    class="bg-orange-50 dark:bg-orange-500/10 hover:bg-orange-500 hover:text-white dark:hover:bg-orange-500 text-orange-600 dark:text-orange-400 border border-orange-200/60 dark:border-orange-500/20 px-5 py-2 rounded-xl text-xs font-bold transition-all duration-200 shadow-sm active:scale-95">
                                     + Add
                                 </button>
 
-                                <div v-else class="bg-orange-500 text-white rounded-xl flex items-center justify-between px-2 py-1 shadow-md shadow-orange-500/20 w-24">
-                                    <button @click="handleDecrease(product)" class="font-bold text-sm px-1 text-white/90 hover:text-white transition">-</button>
+                                <div v-else class="bg-orange-500 text-white rounded-xl flex items-center justify-between px-3 py-1.5 shadow-md shadow-orange-500/20 w-28">
+                                    <button @click="handleDecrease(product)" class="font-bold text-base px-1.5 text-white/90 hover:text-white transition">-</button>
                                     <span class="text-xs font-black">{{ getCartItemQuantity(product) }}</span>
-                                    <button @click="handleAdd(product)" class="font-bold text-sm px-1 text-white/90 hover:text-white transition">+</button>
+                                    <button @click="handleAdd(product)" class="font-bold text-base px-1.5 text-white/90 hover:text-white transition">+</button>
                                 </div>
                             </div>
                         </div>
@@ -395,24 +414,120 @@ onUnmounted(() => {
             </div>
         </main>
 
-        <!-- FLOATING CHECKOUT BAR -->
-        <div v-if="cartStore.totalItems > 0" class="fixed bottom-4 left-4 right-4 max-w-md mx-auto z-40 animate-in slide-in-from-bottom-5 duration-300">
-            <router-link to="/checkout" class="bg-gradient-to-r from-gray-900 to-gray-800 dark:from-gray-800 dark:to-gray-900 hover:from-black hover:to-gray-900 w-full rounded-2xl px-4 py-3.5 flex justify-between items-center shadow-xl shadow-black/15 active:scale-[0.98] transition border border-white/10 dark:border-gray-700">
-                <div class="flex items-center gap-3">
-                    <div class="bg-orange-500 text-white p-2.5 rounded-xl shadow-md shadow-orange-500/30">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg>
-                    </div>
-                    <div class="text-white">
-                        <p class="text-[10px] uppercase font-bold tracking-widest text-orange-400">{{ cartStore.totalItems }} Item Terpilih</p>
-                        <p class="font-black text-xs leading-tight">Rp {{ formatPrice(cartTotalPrice) }}</p>
+<!-- FLOATING TOMBOL KATEGORI (BERUBAH MENJADI TOMBOL CLOSE SAAT MODAL DIBUKA, POSISI TEPAT DI BAWAH LIST MENU) -->
+        <div class="fixed bottom-20 left-0 right-0 max-w-md mx-auto z-50 px-4 flex justify-center pointer-events-none">
+            <button 
+                @click="isCategoryModalOpen = !isCategoryModalOpen"
+                :class="[
+                    'pointer-events-auto font-black text-xs px-6 py-2.5 rounded-full flex items-center gap-2 transition-all shadow-lg active:scale-95',
+                    isCategoryModalOpen 
+                        ? 'bg-red-600 hover:bg-red-700 text-white shadow-red-600/30' 
+                        : 'bg-gray-900 text-white shadow-black/20'
+                ]"
+            >
+                <span class="text-sm">{{ isCategoryModalOpen ? '✕' : '🍽️' }}</span>
+                <span>{{ isCategoryModalOpen ? 'Tutup' : 'Menu' }}</span>
+            </button>
+        </div>
+
+        <!-- MODAL KATEGORI (POSISI DINAIKKAN SEDIKIT DENGAN PB-32) -->
+        <div v-if="isCategoryModalOpen" class="fixed inset-0 z-40 bg-black/70 backdrop-blur-xs flex items-end justify-center pb-32 p-4 animate-in fade-in duration-200" @click="isCategoryModalOpen = false">
+            <div class="bg-white dark:bg-gray-900 w-full max-w-xs rounded-3xl max-h-[60vh] flex flex-col overflow-hidden shadow-2xl animate-in slide-in-from-bottom duration-200 border border-gray-100 dark:border-gray-800" @click.stop>
+                
+                <div class="px-4 py-3 border-b border-gray-100 dark:border-gray-800 text-center flex-shrink-0">
+                    <h3 class="text-xs font-black text-gray-800 dark:text-gray-100 uppercase tracking-wider">Pilih Menu</h3>
+                </div>
+
+                <!-- List Kategori Menu berbentuk Blok -->
+                <div class="flex-1 overflow-y-auto p-3 space-y-1.5 min-h-0">
+                    <div 
+                        v-for="(items, categoryName) in groupedProducts" 
+                        :key="categoryName"
+                        @click="scrollToCategory(categoryName)"
+                        class="px-4 py-3.5 rounded-2xl flex items-center justify-between cursor-pointer bg-gray-50 dark:bg-gray-800/60 hover:bg-orange-50 dark:hover:bg-orange-500/10 hover:text-orange-600 transition"
+                    >
+                        <span class="text-xs font-bold text-gray-800 dark:text-gray-100">{{ categoryName }}</span>
+                        <span class="text-xs font-bold text-gray-400 dark:text-gray-500">{{ items.length }}</span>
                     </div>
                 </div>
-                <div class="flex items-center gap-1.5 text-white font-black text-xs bg-orange-500 hover:bg-orange-600 px-4 py-2.5 rounded-xl shadow-md shadow-orange-500/20 transition">
-                    <span>Checkout</span>
+
+            </div>
+        </div>
+
+        <!-- OVERLAY MODAL DETAIL KERANJANG (SWIPE UP / DOWN) -->
+        <div v-if="isCartOpen" @click="isCartOpen = false" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs transition-opacity duration-300"></div>
+
+        <div 
+            v-if="isCartOpen" 
+            class="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white dark:bg-gray-900 rounded-t-3xl z-50 p-4 space-y-4 shadow-2xl border-t border-gray-100 dark:border-gray-800 animate-in slide-in-from-bottom duration-300 max-h-[75vh] flex flex-col"
+            @touchstart="handleTouchStart"
+            @touchmove="handleTouchMove"
+            @touchend="handleTouchEnd"
+        >
+            <div class="w-12 h-1.5 bg-gray-300 dark:bg-gray-700 rounded-full mx-auto cursor-pointer" @click="isCartOpen = false"></div>
+
+            <div class="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-4">
+                <h3 class="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-wider">Yang Kamu Pilih</h3>
+            </div>
+
+            <div class="flex-1 overflow-y-auto space-y-3 pr-1">
+                <div v-for="item in cartStore.items" :key="item.id" class="flex items-center justify-between text-xs border-gray-50 dark:border-gray-800/50 last:border-none">
+                    <div class="min-w-0 flex-1 pr-2">
+                        <h4 class="font-bold text-gray-900 dark:text-white truncate">{{ item.name }}</h4>
+                        <p class="text-[11px] text-gray-500 font-mono mt-0.5">Rp {{ formatPrice(item.price) }}</p>
+                    </div>
+
+                    <div class="flex items-center bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden shadow-2xs flex-shrink-0">
+                        <button @click="handleDecrease(item)" class="px-2.5 py-1 text-xs font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">-</button>
+                        <span class="px-2.5 text-xs font-bold text-gray-800 dark:text-gray-100">{{ item.quantity }}</span>
+                        <button @click="handleAdd(item)" class="px-2.5 py-1 text-xs font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">+</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pt-2 border-t border-gray-100 dark:border-gray-800 flex justify-between items-center">
+                <span class="text-xs text-gray-500">Totalnya :</span>
+                <span class="font-black font-mono text-sm text-orange-500">Rp {{ formatPrice(cartTotalPrice) }}</span>
+            </div>
+        </div>
+
+        <!-- FLOATING CHECKOUT BAR TERPISAH (TOTAL ITEM + TOMBOL CHECKOUT TERPISAH) -->
+        <div 
+            v-if="cartStore.totalItems > 0" 
+            class="fixed bottom-4 left-4 right-4 max-w-md mx-auto z-40 animate-in slide-in-from-bottom-5 duration-300 flex items-center gap-2"
+        >
+            <!-- 1. Tombol Total Item (Bisa diklik atau di-swipe up untuk memunculkan list item selected) -->
+          <!-- Tombol Icon Cart Saja (Icon + Badge Angka Total Item di Atasnya), Tombol Checkout Terpisah -->
+            <div 
+                @click="isCartOpen = !isCartOpen"
+                @touchstart="handleTouchStart"
+                @touchmove="handleTouchMove"
+                @touchend="handleTouchEnd"
+                class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl w-14 h-14 flex items-center justify-center shadow-xl cursor-pointer flex-shrink-0 transition active:scale-[0.98] relative"
+            >
+                <div class="text-xl">
+                    🛒
+                </div>
+                <span class="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] font-black min-w-5 h-5 px-1 rounded-full flex items-center justify-center shadow-md border-2 border-white dark:border-gray-900">
+                    {{ cartStore.totalItems }}
+                </span>
+            </div>
+
+            <!-- 2. Tombol Checkout Terpisah -->
+<router-link 
+                to="/checkout" 
+                class="bg-orange-500 hover:bg-orange-600 text-white rounded-2xl px-5 py-3 shadow-xl shadow-orange-500/20 transition active:scale-[0.98] flex items-center justify-between flex-1 min-w-0"
+            >
+                <div class="flex flex-col items-start min-w-0 pr-2">
+                    <span class="font-black text-lg font-mono tracking-tight truncate">Rp {{ formatPrice(cartTotalPrice) }}</span>
+                </div>
+                <div class="flex items-center gap-1 font-black text-xs flex-shrink-0 bg-black/10 px-3 py-2 rounded-xl">
+                    <span>Bayar</span>
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
                 </div>
             </router-link>
         </div>
+
         <PwaInstallPrompt />
     </div>
 </template>

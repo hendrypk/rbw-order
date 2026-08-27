@@ -144,6 +144,10 @@ const earnedPoints = computed(() => Math.floor(finalPrice.value / 1000) * 10);
 
 const submitCheckout = async () => {
     if (cartStore.items.length === 0) return;
+    if (finalPrice.value <= 0) {
+        errorMessage.value = 'Total pembayaran tidak boleh Rp 0!';
+        return;
+    }
     if (scheduleType.value === 'later' && (!scheduledDate.value || !scheduledTime.value)) {
         errorMessage.value = 'Silakan pilih tanggal dan jam pengambilan!';
         return;
@@ -171,7 +175,11 @@ const submitCheckout = async () => {
         const response = await axios.post('/checkout', payload);
         if (response.data && response.data.status === 'success') {
             cartStore.clearCart();
-            router.push({ name: 'qris', query: { order_number: response.data.data.order_number, amount: finalPrice.value } });
+            router.push({ 
+                name: 'qris', 
+                query: { 
+                    order_number: response.data.data.order_number, 
+                    amount: response.data.data.final_total } });
         } else {
             throw new Error(response.data.message || 'Gagal memproses pesanan.');
         }

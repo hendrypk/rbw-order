@@ -5,6 +5,8 @@ import axios from '@/axios'
 
 const router = useRouter()
 
+const appVersion = ref('...')
+
 const customer = ref({
   name: 'Memuat...',
   phone: 'Memuat...',
@@ -13,6 +15,37 @@ const customer = ref({
 })
 
 const isLoading = ref(true)
+
+onMounted(async () => {
+  try {
+    // 1. Ambil versi aplikasi dari version.json di server
+    const versionRes = await fetch(`/version.json?t=${new Date().getTime()}`, { cache: 'no-store' });
+    const versionData = await versionRes.json();
+    if (versionData.version) {
+      appVersion.value = versionData.version;
+    }
+
+    // 2. Ambil data profil utama
+    const profileResponse = await axios.get('/profile')
+    if (profileResponse.data && profileResponse.data.data) {
+      customer.value = { ...customer.value, ...profileResponse.data.data }
+    }
+
+    // 3. Ambil data poin secara spesifik dari endpoint loyalty-profile
+    const loyaltyResponse = await axios.get('/loyalty-profile')
+    if (loyaltyResponse.data && loyaltyResponse.data.data) {
+      customer.value.total_points = loyaltyResponse.data.data.total_points || 0
+    }
+
+  } catch (error) {
+    console.error('Gagal memuat profil atau poin:', error)
+    if (error.response && error.response.status === 401) {
+      router.push({ name: 'login' })
+    }
+  } finally {
+    isLoading.value = false
+  }
+})
 
 onMounted(async () => {
   try {
@@ -55,7 +88,7 @@ const handleLogout = async () => {
     <div class="max-w-md mx-auto bg-gray-50 dark:bg-gray-950 h-dvh flex flex-col relative overflow-hidden transition-colors duration-300">
         
         <main class="flex-1 overflow-y-auto p-4 space-y-5 pb-24 scroll-smooth">
-            <h1 class="text-xl font-black text-gray-900 dark:text-white tracking-tight">Profil Pengguna</h1>
+            <!-- <h1 class="text-xl font-black text-gray-900 dark:text-white tracking-tight">Profil Pengguna</h1> -->
 
             <!-- Informasi Profil Utama -->
             <div class="bg-white dark:bg-gray-900 shadow-sm rounded-2xl p-4 flex items-center space-x-4 border border-gray-100 dark:border-gray-800 transition-colors">
@@ -109,11 +142,29 @@ const handleLogout = async () => {
                     <span class="text-gray-400">›</span>
                 </div>
 
+                <a href="https://wa.me/6285814973157?text=Halo%2C%20saya%20butuh%20bantuan%20terkait%20aplikasi%20Roti%20Bakar%20Wisuda." target="_blank" rel="noopener noreferrer" class="p-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer text-xs font-semibold text-gray-700 dark:text-gray-200 transition flex items-center justify-between no-underline">
+                    <span class="flex items-center gap-2">
+                        <span>Butuh Bantuan?</span>
+                    </span>
+                    <span class="text-emerald-500 font-bold">💬</span>
+                </a>
+
                 <div @click="handleLogout" class="p-4 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 cursor-pointer font-semibold text-xs transition flex items-center justify-between">
-                    <span>Keluar (Logout)</span>
+                    <span>Keluar</span>
                     <span>🚪</span>
                 </div>
 
+            </div>
+            <div class="text-center pt-2 pb-4 space-y-1">
+                <p class="text-[11px] text-gray-400 dark:text-gray-500 font-medium">
+                    &copy; 2026 All Rights Reserved | Roti Bakar Wisuda
+                </p>
+                <p class="text-[10px] text-gray-300 dark:text-gray-600">
+                    Dikelola secara mandiri
+                </p>
+                <p class="text-[10px] text-gray-300 dark:text-gray-600">
+                    v{{ appVersion }}
+                </p>
             </div>
         </main>
 
