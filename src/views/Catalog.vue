@@ -103,6 +103,7 @@ const fetchProducts = async () => {
     }
 };
 
+// --- GANTI COMPUTED groupedProducts DI SCRIPT ANDA ---
 const groupedProducts = computed(() => {
     if (!products.value || products.value.length === 0) return {};
     
@@ -115,14 +116,45 @@ const groupedProducts = computed(() => {
         );
     }
 
-    return filtered.reduce((acc, product) => {
-        const categoryName = product.category?.name || 'Menu Lainnya';
-        if (!acc[categoryName]) {
-            acc[categoryName] = [];
+    // Buat wadah berdasarkan urutan dari array categories yang sudah di-sort ascending dari backend
+    const grouped = {};
+    
+    // Inisialisasi key berdasarkan urutan categories dari API
+    categories.value.forEach(cat => {
+        grouped[cat.name] = [];
+    });
+
+    // Masukkan produk ke masing-masing kategori tempat ia terdaftar
+    filtered.forEach(product => {
+        // Jika produk memiliki array categories (banyak kategori)
+        if (product.categories && product.categories.length > 0) {
+            product.categories.forEach(cat => {
+                if (!grouped[cat.name]) {
+                    grouped[cat.name] = [];
+                }
+                // Hindari duplikasi referensi objek jika masuk ke beberapa kategori
+                if (!grouped[cat.name].some(p => p.id === product.id)) {
+                    grouped[cat.name].push(product);
+                }
+            });
+        } else {
+            // Fallback jika kategori kosong
+            const fallbackName = product.category?.name || 'Menu Lainnya';
+            if (!grouped[fallbackName]) grouped[fallbackName] = [];
+            if (!grouped[fallbackName].some(p => p.id === product.id)) {
+                grouped[fallbackName].push(product);
+            }
         }
-        acc[categoryName].push(product);
-        return acc;
-    }, {});
+    });
+
+    // Hapus kategori yang jumlah produknya 0 agar bersih
+    Object.keys(grouped).forEach(key => {
+        if (grouped[key].length === 0) {
+            delete grouped[key];
+        }
+    });
+
+    return grouped;
 });
 
 const scrollTabIntoView = (categoryName) => {
@@ -430,6 +462,7 @@ onUnmounted(() => {
         </div>
 
         <!-- MODAL KATEGORI (POSISI DINAIKKAN SEDIKIT DENGAN PB-32) -->
+<!-- MODAL KATEGORI (BERDASARKAN URUTAN API categories) -->
         <div v-if="isCategoryModalOpen" class="fixed inset-0 z-40 bg-black/70 backdrop-blur-xs flex items-end justify-center pb-32 p-4 animate-in fade-in duration-200" @click="isCategoryModalOpen = false">
             <div class="bg-white dark:bg-gray-900 w-full max-w-xs rounded-3xl max-h-[60vh] flex flex-col overflow-hidden shadow-2xl animate-in slide-in-from-bottom duration-200 border border-gray-100 dark:border-gray-800" @click.stop>
                 
@@ -437,16 +470,18 @@ onUnmounted(() => {
                     <h3 class="text-xs font-black text-gray-800 dark:text-gray-100 uppercase tracking-wider">Pilih Menu</h3>
                 </div>
 
-                <!-- List Kategori Menu berbentuk Blok -->
+                <!-- List Kategori Menu Sesuai Urutan Sort Management -->
                 <div class="flex-1 overflow-y-auto p-3 space-y-1.5 min-h-0">
                     <div 
-                        v-for="(items, categoryName) in groupedProducts" 
-                        :key="categoryName"
-                        @click="scrollToCategory(categoryName)"
+                        v-for="cat in categories" 
+                        :key="cat.id"
+                        @click="scrollToCategory(cat.name)"
                         class="px-4 py-3.5 rounded-2xl flex items-center justify-between cursor-pointer bg-gray-50 dark:bg-gray-800/60 hover:bg-orange-50 dark:hover:bg-orange-500/10 hover:text-orange-600 transition"
                     >
-                        <span class="text-xs font-bold text-gray-800 dark:text-gray-100">{{ categoryName }}</span>
-                        <span class="text-xs font-bold text-gray-400 dark:text-gray-500">{{ items.length }}</span>
+                        <span class="text-xs font-bold text-gray-800 dark:text-gray-100">{{ cat.name }}</span>
+                        <span class="text-xs font-bold text-gray-400 dark:text-gray-500">
+                            {{ groupedProducts[cat.name] ? groupedProducts[cat.name].length : 0 }}
+                        </span>
                     </div>
                 </div>
 
