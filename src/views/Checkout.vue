@@ -14,6 +14,11 @@ const globalNotes = ref('');
 const scheduleType = ref('now'); 
 const scheduledDate = ref('');
 const scheduledTime = ref('17:30');
+const availableTimes = ref([
+    '17:30', '18:00', '18:30', '19:00', 
+    '19:30', '20:00', '20:30', '21:00', 
+    '21:30', '22:00', '22:30', '23:00', '23:30'
+]);
 
 // --- STATE VOUCHER (MODAL) ---
 const isVoucherModalOpen = ref(false);
@@ -114,7 +119,10 @@ const selectVoucher = (voucher) => {
         voucher_id: voucher.id,
         code: voucher.code,
         name: voucher.name,
-        discount_amount: voucher.value // Sesuaikan struktur response backend anda
+        type: voucher.type,
+        value: voucher.value,
+        discount_amount: voucher.value,
+        max_discount: voucher.max_discount || 0
     };
     isVoucherModalOpen.value = false;
 };
@@ -132,9 +140,31 @@ const appliedPoints = computed(() => {
     return 0;
 });
 // --- KALKULASI HARGA ---
-const voucherDiscount = computed(() => appliedVoucher.value ? Number(appliedVoucher.value.discount_amount) : 0);
-const totalDiscount = computed(() => voucherDiscount.value);
+const voucherDiscount = computed(() => {
+    if (!appliedVoucher.value) return 0;
+    
+    const voucher = appliedVoucher.value;
+    const subtotal = cartStore.totalPrice; 
 
+    if (voucher.type === 'percentage') {
+        // voucher.value di sini adalah angka persentasenya (misal: 10 untuk 10%)
+        const percent = Number(voucher.value || 0);
+        const calculated = (subtotal * percent) / 100;
+        
+        const maxDisc = Number(voucher.max_discount || 0);
+        if (maxDisc > 0 && calculated > maxDisc) {
+            return maxDisc;
+        }
+        return Math.round(calculated);
+    }
+    
+    // Jika fixed, langsung ambil nominal potongannya
+    return Number(voucher.value || 0);
+});
+
+const totalDiscount = computed(() => {
+    return voucherDiscount.value;
+});
 const finalPrice = computed(() => {
     const total = cartStore.totalPrice - totalDiscount.value - appliedPoints.value;
         return total < 0 ? 0 : total;
@@ -208,32 +238,53 @@ const submitCheckout = async () => {
             </div>
 
             <!-- Waktu Penyiapan -->
-            <div class="bg-white dark:bg-gray-900 p-3.5 rounded-2xl border border-gray-100 dark:border-gray-800 space-y-2.5 shadow-sm">
+            <div class="bg-white dark:bg-gray-900 p-3.5 rounded-2xl border border-gray-100 dark:border-gray-800 space-y-3 shadow-sm">
                 <div class="flex justify-between items-center text-xs">
                     <span class="font-bold text-gray-700 dark:text-gray-300">Waktu Penyiapan</span>
                     <div class="flex bg-gray-100 dark:bg-gray-800 p-0.5 rounded-xl font-semibold">
-                        <button @click="scheduleType = 'now'" :class="['px-3 py-1 rounded-lg transition', scheduleType === 'now' ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-xs' : 'text-gray-500']">Sekarang</button>
-                        <button @click="scheduleType = 'later'" :class="['px-3 py-1 rounded-lg transition', scheduleType === 'later' ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-xs' : 'text-gray-500']">Terjadwal</button>
+                        <button type="button" @click="scheduleType = 'now'" :class="['px-3 py-1 rounded-lg transition', scheduleType === 'now' ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-xs' : 'text-gray-500 dark:text-gray-400']">Sekarang</button>
+                        <button type="button" @click="scheduleType = 'later'" :class="['px-3 py-1 rounded-lg transition', scheduleType === 'later' ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-xs' : 'text-gray-500 dark:text-gray-400']">Terjadwal</button>
+                    </div>
+                </div>
+
+                <!-- Mode Terjadwal dengan Validasi Tanggal & Interval Jam Operasional 17:30 - 23:30 -->
+                <div v-if="scheduleType === 'later'" class="grid grid-cols-2 gap-2 pt-2 border-t border-gray-100 dark:border-gray-800">
+                    <div>
+                        <label class="text-[10px] text-gray-400 font-semibold block mb-1">Tanggal</label>
+                        <input 
+                            type="date" 
+                            v-model="scheduledDate" 
+                            :min="new Date().toISOString().split('T')[0]" 
+                            class="w-full text-xs p-2 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-white focus:outline-none focus:ring-1 focus:ring-orange-500 dark:[color-scheme:dark]" 
+                        />
+                    </div>
+                    <div>
+                        <label class="text-[10px] text-gray-400 font-semibold block mb-1">Jam (17:30 - 23:30)</label>
+                        <select 
+                            v-model="scheduledTime" 
+                            class="w-full text-xs p-2 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-white focus:outline-none focus:ring-1 focus:ring-orange-500"
+                        >
+                            <option value="" disabled>Pilih Jam</option>
+                            <option v-for="time in availableTimes" :key="time" :value="time">{{ time }}</option>
+                        </select>
                     </div>
                 </div>
             </div>
 
             <!-- 1. SHOPEE STYLE: PILIH VOUCHER (BUKA MODAL) -->
             <div @click="isVoucherModalOpen = true" class="bg-white dark:bg-gray-900 p-3.5 rounded-2xl border border-gray-100 dark:border-gray-800 flex items-center justify-between cursor-pointer shadow-sm hover:border-orange-400 transition">
-                <div class="flex items-center gap-2">
-                    <div>
-                        <h4 class="text-xs font-bold text-gray-700 dark:text-white capitalize">Voucher Toko</h4>
-                        <p class="text-[11px] text-gray-400">{{ appliedVoucher ? appliedVoucher.name : 'Pilih atau masukkan voucher' }}</p>
-                    </div>
+                <div>
+                    <h4 class="text-xs font-bold text-gray-700 dark:text-white capitalize">Voucher Toko</h4>
+                    <p class="text-[11px] text-gray-400">
+                        {{ appliedVoucher ? `${appliedVoucher.name}${appliedVoucher.type === 'percentage' ? ` (${appliedVoucher.value}%)` : ''}` : 'Pilih atau masukkan voucher' }}
+                    </p>
                 </div>
                 <div class="flex items-center gap-1">
-                    <span v-if="appliedVoucher" class="text-xs font-bold text-amber-600">-Rp {{ formatPrice(appliedVoucher.discount_amount) }}</span>
+                    <span v-if="appliedVoucher" class="text-xs font-bold text-amber-600">-Rp {{ formatPrice(totalDiscount) }}</span>
                     <span class="text-gray-400">›</span>
                 </div>
             </div>
 
-            <!-- 2. SHOPEE STYLE: TUKAR POIN (RADIO BUTTON SIMPLE) -->
-<!-- TUKAR POIN STYLE SHOPEE (TOGGLE SWITCH DI KANAN) -->
             <div class="bg-white dark:bg-gray-900 p-3.5 rounded-2xl border border-gray-100 dark:border-gray-800 flex items-center justify-between shadow-sm">
                 <div class="flex items-center gap-2.5">
 
@@ -322,13 +373,13 @@ const submitCheckout = async () => {
         </main>
 
         <!-- FLOATING BUTTON BAWAH (AMAN TIDAK MENUTUPI KONTEN) -->
-        <div v-if="cartStore.items.length > 0" class="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800 p-3 max-w-md mx-auto z-40 flex items-center justify-between shadow-2xl">
+        <div v-if="cartStore.items.length > 0" class="w-full fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800 p-3 max-w-md mx-auto z-40 flex items-center justify-between shadow-2xl">
             <div>
                 <span class="text-[10px] text-gray-400 uppercase block font-bold">Total Pembayaran</span>
                 <span class="text-base font-black font-mono text-amber-600">Rp {{ formatPrice(finalPrice) }}</span>
             </div>
             <button @click="submitCheckout" :disabled="loading" class="bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs px-6 py-3 rounded-2xl shadow-md transition cursor-pointer disabled:opacity-50">
-                {{ loading ? 'Memproses...' : 'Buat Pesanan' }}
+                {{ loading ? 'Memproses...' : 'Bayar Sekarang' }}
             </button>
         </div>
 
@@ -349,7 +400,14 @@ const submitCheckout = async () => {
                     <div v-for="v in availableVouchers" :key="v.id" @click="selectVoucher(v)" class="p-3.5 bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700 rounded-2xl flex justify-between items-center cursor-pointer hover:border-orange-500 transition">
                         <div>
                             <h4 class="text-xs font-bold text-gray-700 dark:text-white capitalize pb-1">{{ v.name }}</h4>
-                            <p class="text-[11px] text-amber-600 font-medium">Potongan Rp {{ formatPrice(v.value) }}</p>
+                            <p class="text-[11px] text-amber-600 font-medium">
+                                <template v-if="v.type === 'percentage'">
+                                    Diskon {{ v.value }}%<span v-if="v.max_discount"> (Maks Rp {{ formatPrice(v.max_discount) }})</span>
+                                </template>
+                                <template v-else>
+                                    Potongan Rp {{ formatPrice(v.value) }}
+                                </template>
+                            </p>
                         </div>
                         <span class="text-xs font-bold text-orange-500 bg-orange-50 px-3 py-1 rounded-full">Gunakan</span>
                     </div>
