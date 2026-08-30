@@ -137,7 +137,7 @@ const totalDiscount = computed(() => voucherDiscount.value);
 
 const finalPrice = computed(() => {
     const total = cartStore.totalPrice - totalDiscount.value - appliedPoints.value;
-    return total < 0 ? 0 : total;
+        return total < 0 ? 0 : total;
 });
 
 const earnedPoints = computed(() => Math.floor(finalPrice.value / 1000) * 10);
@@ -169,7 +169,8 @@ const submitCheckout = async () => {
             voucher_id: appliedVoucher.value ? appliedVoucher.value.voucher_id : null, 
             points_to_use: appliedPoints.value, 
             discount: totalDiscount.value, 
-            items: cartStore.items.map(i => ({ menu_id: i.id, quantity: i.quantity }))
+            items: cartStore.items.map(i => ({ menu_id: i.id, quantity: i.quantity })),
+            amoint_paid: finalPrice.value
         };
 
         const response = await axios.post('/checkout', payload);

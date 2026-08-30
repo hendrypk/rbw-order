@@ -103,7 +103,7 @@ const handleLogout = async () => {
                         {{ customer.email || '-' }}
                     </p>
                     <p class="text-xs text-amber-600 dark:text-amber-400 font-semibold mt-1">
-                        {{ customer.phone || customer.whatsapp || '-' }}
+                        {{ customer.phone || '-' }}
                     </p>
                 </div>
             </div>
