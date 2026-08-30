@@ -373,15 +373,17 @@ const submitCheckout = async () => {
         </main>
 
         <!-- FLOATING BUTTON BAWAH (AMAN TIDAK MENUTUPI KONTEN) -->
-        <div v-if="cartStore.items.length > 0" class="w-full fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800 p-3 max-w-md mx-auto z-40 flex items-center justify-between shadow-2xl">
-            <div>
-                <span class="text-[10px] text-gray-400 uppercase block font-bold">Total Pembayaran</span>
-                <span class="text-base font-black font-mono text-amber-600">Rp {{ formatPrice(finalPrice) }}</span>
-            </div>
-            <button @click="submitCheckout" :disabled="loading" class="bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs px-6 py-3 rounded-2xl shadow-md transition cursor-pointer disabled:opacity-50">
-                {{ loading ? 'Memproses...' : 'Bayar Sekarang' }}
-            </button>
+<div v-if="cartStore.items.length > 0" class="w-full fixed bottom-0 left-0 right-0 p-3 max-w-md mx-auto z-40 shadow-2xl">
+    <button @click="submitCheckout" :disabled="loading" class="w-full bg-orange-500 hover:bg-orange-600 text-white rounded-2xl px-5 py-3 shadow-md transition cursor-pointer disabled:opacity-50 flex items-center justify-between">
+        <div class="flex flex-col items-start min-w-0 pr-2">
+            <span class="text-[9px] uppercase font-bold text-orange-200 tracking-wider">Total Pembayaran</span>
+            <span class="font-black text-sm font-mono tracking-tight truncate text-white">Rp {{ formatPrice(finalPrice) }}</span>
         </div>
+        <div class="flex items-center gap-1 font-black text-xs shrink-0 bg-orange-700/40 px-3.5 py-2 rounded-xl text-white">
+            <span>{{ loading ? 'Memproses...' : 'Bayar Sekarang' }}</span>
+        </div>
+    </button>
+</div>
 
         <!-- MODAL PILIH VOUCHER (SHOPEE STYLE) -->
         <div v-if="isVoucherModalOpen" class="fixed inset-0 z-50 bg-black/60 flex items-end sm:items-center justify-center p-0 sm:p-4">
